@@ -1,4 +1,7 @@
-use iced::{widget::text_editor, Element, Length};
+use iced::{
+    widget::{button, column, container, horizontal_space, row, text_editor},
+    Element, Length,
+};
 
 fn main() -> iced::Result {
     iced::application("journey", Editor::update, Editor::view).run()
@@ -29,9 +32,18 @@ impl Editor {
     }
 
     fn view(&self) -> Element<Message> {
-        text_editor(&self.contents)
+        let open = button("Open");
+        let save = button("Save");
+        let new = button("New");
+
+        let controls = row![horizontal_space(), open, save, new].spacing(5);
+
+        let editor = text_editor(&self.contents)
             .on_action(Message::Edit)
-            .height(Length::Fill)
-            .into()
+            .height(Length::Fill);
+
+        let main = column![controls, editor].spacing(5);
+
+        container(main).padding(5).into()
     }
 }
