@@ -14,6 +14,7 @@ fn main() -> iced::Result {
 enum Message {
     Edit(text_editor::Action),
     Open,
+    Save,
 }
 
 struct Editor {
@@ -40,13 +41,18 @@ impl Editor {
                     self.contents = text_editor::Content::with_text(&contents);
                 }
             }
+            Message::Save => {
+                if let Ok(path) = save_file(self.path.clone(), self.contents.text()) {
+                    self.path = Some(path);
+                }
+            }
         }
     }
 
     fn view(&self) -> Element<Message> {
         let new = button("New");
         let open = button("Open").on_press(Message::Open);
-        let save = button("Save");
+        let save = button("Save").on_press(Message::Save);
 
         let controls = row![horizontal_space(), new, open, save].spacing(5);
 
@@ -62,15 +68,17 @@ impl Editor {
 
 #[derive(Debug)]
 enum Error {
-    FailedOpenFile,
+    FailedPickFile,
     FailedLoadFile(io::Error),
+    FailedSaveFile(io::Error),
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::FailedOpenFile => write!(f, "Failed to open file"),
+            Error::FailedPickFile => write!(f, "Failed to pick file"),
             Error::FailedLoadFile(err) => write!(f, "Failed to load file: {:?}", err),
+            Error::FailedSaveFile(err) => write!(f, "Failed to save file: {:?}", err),
         }
     }
 }
@@ -81,8 +89,22 @@ fn open_file() -> Result<(PathBuf, String), Error> {
     let path = rfd::FileDialog::new()
         .set_directory("./")
         .pick_file()
-        .ok_or(Error::FailedOpenFile)?;
+        .ok_or(Error::FailedPickFile)?;
     let contents = fs::read_to_string(&path).map_err(|err| Error::FailedLoadFile(err))?;
 
     Ok((path, contents))
+}
+
+fn save_file(path: Option<PathBuf>, contents: String) -> Result<PathBuf, Error> {
+    let path = if let Some(path) = path {
+        path
+    } else {
+        rfd::FileDialog::new()
+            .set_directory("./")
+            .save_file()
+            .ok_or(Error::FailedPickFile)?
+    };
+    fs::write(&path, contents).map_err(|err| Error::FailedSaveFile(err))?;
+
+    Ok(path)
 }
