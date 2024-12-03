@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use iced::{
     futures::io,
-    widget::{button, column, container, horizontal_space, row, text_editor},
+    widget::{button, column, container, horizontal_space, row, text, text_editor},
     Element, Length,
 };
 
@@ -60,7 +60,13 @@ impl Editor {
             .on_action(Message::Edit)
             .height(Length::Fill);
 
-        let main = column![controls, editor].spacing(5);
+        let cursol_position = {
+            let (line, column) = self.contents.cursor_position();
+            text!("{}:{}", line, column)
+        };
+        let status_bar = row![horizontal_space(), cursol_position];
+
+        let main = column![controls, editor, status_bar].spacing(5);
 
         container(main).padding(5).into()
     }
