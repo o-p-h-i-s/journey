@@ -61,8 +61,18 @@ impl Editor {
             .height(Length::Fill);
 
         let cursol_position = {
+            let file_type = if let Some(ext) = self
+                .path
+                .as_ref()
+                .and_then(|path| path.extension())
+                .and_then(|ext| ext.to_str())
+            {
+                ext
+            } else {
+                "None"
+            };
             let (line, column) = self.contents.cursor_position();
-            text!("{}:{}", line, column)
+            text!("{}/{}:{}", file_type, line, column)
         };
         let status_bar = row![horizontal_space(), cursol_position];
 
