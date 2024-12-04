@@ -13,6 +13,7 @@ fn main() -> iced::Result {
 #[derive(Debug, Clone)]
 enum Message {
     Edit(text_editor::Action),
+    New,
     Open,
     Save,
 }
@@ -35,6 +36,10 @@ impl Editor {
     fn update(&mut self, message: Message) {
         match message {
             Message::Edit(action) => self.contents.perform(action),
+            Message::New => {
+                self.path = None;
+                self.contents = text_editor::Content::new();
+            }
             Message::Open => {
                 if let Ok((path, contents)) = open_file() {
                     self.path = Some(path);
@@ -50,7 +55,7 @@ impl Editor {
     }
 
     fn view(&self) -> Element<Message> {
-        let new = button("New");
+        let new = button("New").on_press(Message::New);
         let open = button("Open").on_press(Message::Open);
         let save = button("Save").on_press(Message::Save);
 
